@@ -70,13 +70,50 @@ export function useUserData(uid) {
     setResume(text)
   }
 
+  const archiveJob = async (jobId) => {
+    await updateDoc(doc(db, 'users', uid, 'jobs', jobId), { archived: true })
+  }
+
+  const restoreJob = async (jobId) => {
+    await updateDoc(doc(db, 'users', uid, 'jobs', jobId), { archived: false })
+  }
+
   const deleteJob = async (jobId) => {
     await deleteDoc(doc(db, 'users', uid, 'jobs', jobId))
+  }
+
+  const addCategory = async (jobId, category) => {
+    const job = jobs.find((j) => j.id === jobId)
+    const current = job?.categories || []
+    if (current.includes(category)) return
+    await updateDoc(doc(db, 'users', uid, 'jobs', jobId), { categories: [...current, category] })
+  }
+
+  const deleteCategory = async (jobId, category) => {
+    const job = jobs.find((j) => j.id === jobId)
+    const current = job?.categories || []
+    await updateDoc(doc(db, 'users', uid, 'jobs', jobId), { categories: current.filter((c) => c !== category) })
+  }
+
+  const reorderCards = async (jobId, orderedIds) => {
+    await Promise.all(
+      orderedIds.map((id, index) =>
+        updateDoc(doc(db, 'users', uid, 'jobs', jobId, 'cards', id), { order: index })
+      )
+    )
+  }
+
+  const archiveCard = async (jobId, cardId) => {
+    await updateDoc(doc(db, 'users', uid, 'jobs', jobId, 'cards', cardId), { archived: true })
+  }
+
+  const restoreCard = async (jobId, cardId) => {
+    await updateDoc(doc(db, 'users', uid, 'jobs', jobId, 'cards', cardId), { archived: false })
   }
 
   const deleteCard = async (jobId, cardId) => {
     await deleteDoc(doc(db, 'users', uid, 'jobs', jobId, 'cards', cardId))
   }
 
-  return { jobs, cardsByJob, resume, addJob, updateJob, deleteJob, addCard, updateCard, deleteCard, updateResume }
+  return { jobs, cardsByJob, resume, addJob, updateJob, deleteJob, archiveJob, restoreJob, addCard, updateCard, deleteCard, archiveCard, restoreCard, reorderCards, addCategory, deleteCategory, updateResume }
 }

@@ -2,13 +2,17 @@ import { useState, useEffect } from 'react'
 
 const emptyJob = { title: '', company: '', url: '', intro: '', description: '', summary: '' }
 
-function CurrentJobs({ jobs, onUpdateJob, onAddJob, onDeleteJob, onSelectJob, selectedJob, onGenerateCards }) {
+function CurrentJobs({ jobs, onUpdateJob, onAddJob, onDeleteJob, onArchiveJob, onRestoreJob, onSelectJob, selectedJob, onGenerateCards }) {
   const [editing, setEditing] = useState(false)
   const [desc, setDesc] = useState('')
   const [intro, setIntro] = useState('')
   const [summary, setSummary] = useState('')
   const [showForm, setShowForm] = useState(false)
+  const [showArchive, setShowArchive] = useState(false)
   const [form, setForm] = useState(emptyJob)
+
+  const activeJobs = jobs.filter((j) => !j.archived)
+  const archivedJobs = jobs.filter((j) => j.archived)
 
   useEffect(() => {
     if (selectedJob) {
@@ -51,10 +55,10 @@ function CurrentJobs({ jobs, onUpdateJob, onAddJob, onDeleteJob, onSelectJob, se
           + Add Job
         </button>
 
-        {jobs.length === 0 && !showForm && (
+        {activeJobs.length === 0 && !showForm && (
           <p className="text-gray-400 text-sm">No jobs added yet.</p>
         )}
-        {jobs.map((job) => (
+        {activeJobs.map((job) => (
           <div
             key={job.id}
             onClick={() => handleSelect(job)}
@@ -66,21 +70,70 @@ function CurrentJobs({ jobs, onUpdateJob, onAddJob, onDeleteJob, onSelectJob, se
           >
             <p className="font-medium text-sm pr-6">{job.title}</p>
             <p className="text-xs text-gray-400 mt-1">{job.company}</p>
-            {onDeleteJob && (
+            {onArchiveJob && (
               <button
                 onClick={(e) => {
                   e.stopPropagation()
+                  if (!confirm('Archive this job?')) return
                   if (selectedJob?.id === job.id) onSelectJob(null)
-                  onDeleteJob(job.id)
+                  onArchiveJob(job.id)
                 }}
-                className="absolute top-3 right-3 text-gray-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 text-lg leading-none"
-                aria-label="Delete job"
+                className="absolute top-3 right-3 text-gray-300 hover:text-yellow-500 transition-colors opacity-0 group-hover:opacity-100 text-lg leading-none"
+                aria-label="Archive job"
+                title="Archive"
               >
-                ×
+                ↓
               </button>
             )}
           </div>
         ))}
+
+        {/* Archive section */}
+        {archivedJobs.length > 0 && (
+          <div className="mt-2">
+            <button
+              onClick={() => setShowArchive((v) => !v)}
+              className="w-full text-left text-xs font-semibold uppercase tracking-widest text-gray-400 hover:text-gray-600 transition-colors flex items-center justify-between px-1 py-2"
+            >
+              <span>Archived ({archivedJobs.length})</span>
+              <span>{showArchive ? '▲' : '▼'}</span>
+            </button>
+
+            {showArchive && (
+              <div className="flex flex-col gap-2 mt-1">
+                {archivedJobs.map((job) => (
+                  <div
+                    key={job.id}
+                    className="rounded-2xl border border-gray-200 bg-gray-50 p-4 relative group opacity-60 hover:opacity-100 transition-opacity"
+                  >
+                    <p className="font-medium text-sm pr-12 text-gray-500">{job.title}</p>
+                    <p className="text-xs text-gray-400 mt-1">{job.company}</p>
+                    <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => onRestoreJob?.(job.id)}
+                        className="text-gray-400 hover:text-blue-500 transition-colors text-xs px-1.5 py-0.5 rounded border border-gray-200 hover:border-blue-300"
+                        title="Restore"
+                      >
+                        ↑
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (!confirm('Permanently delete this job?')) return
+                          onDeleteJob?.(job.id)
+                        }}
+                        className="text-gray-400 hover:text-red-400 transition-colors text-lg leading-none"
+                        title="Delete permanently"
+                        aria-label="Delete job"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Add job form */}
