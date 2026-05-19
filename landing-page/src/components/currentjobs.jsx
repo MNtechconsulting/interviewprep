@@ -1,16 +1,21 @@
 import { useState, useEffect } from 'react'
 
-const emptyJob = { title: '', company: '', description: '' }
+const emptyJob = { title: '', company: '', url: '', intro: '', description: '', summary: '' }
 
-function CurrentJobs({ jobs, onUpdateJob, onAddJob, onDeleteJob, onSelectJob, selectedJob }) {
+function CurrentJobs({ jobs, onUpdateJob, onAddJob, onDeleteJob, onSelectJob, selectedJob, onGenerateCards }) {
   const [editing, setEditing] = useState(false)
   const [desc, setDesc] = useState('')
+  const [intro, setIntro] = useState('')
+  const [summary, setSummary] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(emptyJob)
 
-  // Sync desc when selectedJob changes from outside (e.g. Firestore update)
   useEffect(() => {
-    if (selectedJob) setDesc(selectedJob.description || '')
+    if (selectedJob) {
+      setDesc(selectedJob.description || '')
+      setIntro(selectedJob.intro || '')
+      setSummary(selectedJob.summary || '')
+    }
   }, [selectedJob?.id])
 
   const handleSelect = (job) => {
@@ -21,7 +26,7 @@ function CurrentJobs({ jobs, onUpdateJob, onAddJob, onDeleteJob, onSelectJob, se
   }
 
   const handleSave = () => {
-    const updated = { ...selectedJob, description: desc }
+    const updated = { ...selectedJob, intro, description: desc, summary }
     onUpdateJob?.(updated)
     onSelectJob(updated)
     setEditing(false)
@@ -94,6 +99,13 @@ function CurrentJobs({ jobs, onUpdateJob, onAddJob, onDeleteJob, onSelectJob, se
             onChange={(e) => setForm((p) => ({ ...p, company: e.target.value }))}
             className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
           />
+          <input
+            type="url"
+            placeholder="Job URL (optional)"
+            value={form.url}
+            onChange={(e) => setForm((p) => ({ ...p, url: e.target.value }))}
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
+          />
           <textarea
             placeholder="Description"
             value={form.description}
@@ -125,6 +137,32 @@ function CurrentJobs({ jobs, onUpdateJob, onAddJob, onDeleteJob, onSelectJob, se
           <div>
             <h2 className="text-xl font-semibold">{selectedJob.title}</h2>
             <p className="text-sm text-gray-400">{selectedJob.company}</p>
+            {selectedJob.url && (
+              <a
+                href={selectedJob.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-blue-500 hover:underline break-all"
+              >
+                {selectedJob.url}
+              </a>
+            )}
+          </div>
+
+          <div>
+            <span className="text-xs font-semibold uppercase tracking-widest text-blue-500">
+              Intro
+            </span>
+            {editing ? (
+              <textarea
+                value={intro}
+                onChange={(e) => setIntro(e.target.value)}
+                rows={3}
+                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 resize-none bg-white"
+              />
+            ) : (
+              <p className="text-gray-600 mt-1 whitespace-pre-wrap">{intro || '—'}</p>
+            )}
           </div>
 
           <div>
@@ -140,6 +178,22 @@ function CurrentJobs({ jobs, onUpdateJob, onAddJob, onDeleteJob, onSelectJob, se
               />
             ) : (
               <p className="text-gray-600 mt-1 whitespace-pre-wrap">{desc || '—'}</p>
+            )}
+          </div>
+
+          <div>
+            <span className="text-xs font-semibold uppercase tracking-widest text-blue-500">
+              Summary
+            </span>
+            {editing ? (
+              <textarea
+                value={summary}
+                onChange={(e) => setSummary(e.target.value)}
+                rows={3}
+                className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 resize-none bg-white"
+              />
+            ) : (
+              <p className="text-gray-600 mt-1 whitespace-pre-wrap">{summary || '—'}</p>
             )}
           </div>
 
@@ -159,6 +213,20 @@ function CurrentJobs({ jobs, onUpdateJob, onAddJob, onDeleteJob, onSelectJob, se
                 Save
               </button>
             )}
+            <button
+              onClick={() => {
+                const text = desc || selectedJob.description || ''
+                const bullets = text
+                  .split('\n')
+                  .map((l) => l.replace(/^[\s\-•*]+/, '').trim())
+                  .filter((l) => l.length > 0)
+                if (bullets.length === 0) return alert('No bullet points found in description.')
+                onGenerateCards?.(bullets)
+              }}
+              className="px-4 py-2 text-sm rounded-lg border border-green-300 text-green-600 hover:bg-green-50 transition-colors"
+            >
+              Generate STAR Cards
+            </button>
             <button
               onClick={() => alert('AI generate coming soon')}
               className="px-4 py-2 text-sm rounded-lg border border-purple-300 text-purple-500 hover:bg-purple-50 transition-colors"
