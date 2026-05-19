@@ -44,6 +44,108 @@ function SortableCard({ id, children }) {
   )
 }
 
+// Collapsible category panel — stacks on mobile, sidebar on desktop
+function CategoryPanel({ categories, activeCards, activeCategory, setActiveCategory, handleDeleteCategory, selectedJob, newCat, setNewCat, handleAddCategory }) {
+  const [open, setOpen] = useState(false)
+  const activeCatLabel = activeCategory || 'All'
+
+  return (
+    <div className="md:hidden">
+      {/* Mobile: collapsible bar */}
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-medium text-gray-700"
+      >
+        <span>Filter: <span className="text-blue-500">{activeCatLabel}</span></span>
+        <span className="text-gray-400">{open ? '▲' : '▼'}</span>
+      </button>
+
+      {open && (
+        <div className="mt-2 flex flex-col gap-2 bg-white border border-gray-200 rounded-2xl p-3">
+          <CategoryList
+            categories={categories}
+            activeCards={activeCards}
+            activeCategory={activeCategory}
+            setActiveCategory={(cat) => { setActiveCategory(cat); setOpen(false) }}
+            handleDeleteCategory={handleDeleteCategory}
+            selectedJob={selectedJob}
+            newCat={newCat}
+            setNewCat={setNewCat}
+            handleAddCategory={handleAddCategory}
+          />
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Desktop sidebar — hidden on mobile, shown on md+
+function CategorySidebar({ categories, activeCards, activeCategory, setActiveCategory, handleDeleteCategory, selectedJob, newCat, setNewCat, handleAddCategory }) {
+  return (
+    <div className="hidden md:flex flex-col gap-3 w-48 shrink-0 sticky top-6 self-start">
+      <CategoryList
+        categories={categories}
+        activeCards={activeCards}
+        activeCategory={activeCategory}
+        setActiveCategory={setActiveCategory}
+        handleDeleteCategory={handleDeleteCategory}
+        selectedJob={selectedJob}
+        newCat={newCat}
+        setNewCat={setNewCat}
+        handleAddCategory={handleAddCategory}
+      />
+    </div>
+  )
+}
+
+function CategoryList({ categories, activeCards, activeCategory, setActiveCategory, handleDeleteCategory, selectedJob, newCat, setNewCat, handleAddCategory }) {
+  return (
+    <>
+      {categories.map((cat) => (
+        <div key={cat} className="relative group/cat">
+          <Card
+            title={cat}
+            description={`${activeCards.filter((c) => c.category === cat).length} cards`}
+            active={activeCategory === cat}
+            onClick={() => setActiveCategory(cat)}
+          />
+          <button
+            onClick={() => handleDeleteCategory(cat)}
+            className="absolute top-2 right-2 text-gray-300 hover:text-red-400 transition-colors opacity-0 group-hover/cat:opacity-100 text-base leading-none"
+            title="Delete category"
+          >
+            ×
+          </button>
+        </div>
+      ))}
+
+      <Card
+        title="Uncategorized"
+        description={`${activeCards.filter((c) => !c.category || !categories.includes(c.category)).length} cards`}
+        active={activeCategory === 'Uncategorized'}
+        onClick={() => setActiveCategory('Uncategorized')}
+      />
+
+      {selectedJob && (
+        <form onSubmit={handleAddCategory} className="flex gap-1 mt-1">
+          <input
+            value={newCat}
+            onChange={(e) => setNewCat(e.target.value)}
+            placeholder="New category…"
+            className="flex-1 min-w-0 border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-blue-400"
+          />
+          <button
+            type="submit"
+            className="px-2 py-1.5 text-xs rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors shrink-0"
+          >
+            +
+          </button>
+        </form>
+      )}
+    </>
+  )
+}
+
 function Home({ jobs, addJob, updateJob, deleteJob, archiveJob, restoreJob, cardsByJob, addCard, updateCard, deleteCard, archiveCard, restoreCard, reorderCards, addCategory, deleteCategory, resume, updateResume }) {
   const [activeTab, setActiveTab] = useState(
     () => localStorage.getItem('activeTab') || 'My Experience'
@@ -153,56 +255,37 @@ function Home({ jobs, addJob, updateJob, deleteJob, archiveJob, restoreJob, card
         )}
 
         {activeTab === 'STAR Cards' && (
-          <div className="flex gap-6 w-full max-w-4xl">
+          <div className="flex flex-col w-full max-w-4xl gap-4">
 
-            {/* Category sidebar */}
-            <div className="flex flex-col gap-3 w-48 shrink-0 sticky top-6 self-start">
-              {categories.map((cat) => (
-                <div key={cat} className="relative group/cat">
-                  <Card
-                    title={cat}
-                    description={`${activeCards.filter((c) => c.category === cat).length} cards`}
-                    active={activeCategory === cat}
-                    onClick={() => setActiveCategory(cat)}
-                  />
-                  <button
-                    onClick={() => handleDeleteCategory(cat)}
-                    className="absolute top-2 right-2 text-gray-300 hover:text-red-400 transition-colors opacity-0 group-hover/cat:opacity-100 text-base leading-none"
-                    title="Delete category"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
+            {/* Mobile collapsible category panel */}
+            <CategoryPanel
+              categories={categories}
+              activeCards={activeCards}
+              activeCategory={activeCategory}
+              setActiveCategory={setActiveCategory}
+              handleDeleteCategory={handleDeleteCategory}
+              selectedJob={selectedJob}
+              newCat={newCat}
+              setNewCat={setNewCat}
+              handleAddCategory={handleAddCategory}
+            />
 
-              <Card
-                title="Uncategorized"
-                description={`${activeCards.filter((c) => !c.category || !categories.includes(c.category)).length} cards`}
-                active={activeCategory === 'Uncategorized'}
-                onClick={() => setActiveCategory('Uncategorized')}
+            <div className="flex gap-6 w-full">
+              {/* Desktop sidebar */}
+              <CategorySidebar
+                categories={categories}
+                activeCards={activeCards}
+                activeCategory={activeCategory}
+                setActiveCategory={setActiveCategory}
+                handleDeleteCategory={handleDeleteCategory}
+                selectedJob={selectedJob}
+                newCat={newCat}
+                setNewCat={setNewCat}
+                handleAddCategory={handleAddCategory}
               />
 
-              {/* Add category */}
-              {selectedJob && (
-                <form onSubmit={handleAddCategory} className="flex gap-1 mt-1">
-                  <input
-                    value={newCat}
-                    onChange={(e) => setNewCat(e.target.value)}
-                    placeholder="New category…"
-                    className="flex-1 min-w-0 border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-blue-400"
-                  />
-                  <button
-                    type="submit"
-                    className="px-2 py-1.5 text-xs rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors shrink-0"
-                  >
-                    +
-                  </button>
-                </form>
-              )}
-            </div>
-
-            {/* STAR cards list */}
-            <div className="flex flex-col gap-6 flex-1 min-w-0 pl-6">
+              {/* STAR cards list */}
+              <div className="flex flex-col gap-6 flex-1 min-w-0">
               {!selectedJob ? (
                 <p className="text-gray-400 text-sm">Select a job in Current Jobs first.</p>
               ) : (
@@ -323,6 +406,7 @@ function Home({ jobs, addJob, updateJob, deleteJob, archiveJob, restoreJob, card
                   )}
                 </>
               )}
+            </div>
             </div>
           </div>
         )}
