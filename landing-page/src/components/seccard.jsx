@@ -2,10 +2,10 @@ import { useState } from 'react'
 
 const fields = ['discription','situation', 'task', 'action', 'result', 'notes']
 
-function SecCard({ title, situation, task, action, result, onSave }) {
+function SecCard({ title, discription, situation, task, action, result, notes, onSave }) {
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(false)
-  const [form, setForm] = useState({ situation, task, action, result })
+  const [form, setForm] = useState({ discription, situation, task, action, result, notes })
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
@@ -23,7 +23,7 @@ function SecCard({ title, situation, task, action, result, onSave }) {
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-gray-100 transition-colors"
       >
-        <h2 className="text-base font-semibold">{title}</h2>
+        <h3 className="text-base font-semibold">{title}</h3>
         <span className="text-gray-400 text-sm">{open ? '▲' : '▼'}</span>
       </button>
 

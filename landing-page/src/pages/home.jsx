@@ -124,10 +124,12 @@ function Home({ jobs, addJob, updateJob, deleteJob, cardsByJob, addCard, updateC
                       </div>
                       <SecCard
                         title={card.title}
+                        discription={card.discription}
                         situation={card.situation}
                         task={card.task}
                         action={card.action}
                         result={card.result}
+                        notes={card.notes}
                         onSave={(updated) => updateCard(selectedJob.id, { ...card, ...updated })}
                       />
                     </div>
